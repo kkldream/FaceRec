@@ -28,7 +28,7 @@ def main(args):
     if(mode == "camera"):
         camera_recog()
     elif mode == "input":
-        create_manual_data();
+        create_manual_data()
     else:
         raise ValueError("Unimplemented mode")
 '''
@@ -43,12 +43,12 @@ Images from Video Capture -> detect faces' regions -> crop those faces and align
 '''
 def camera_recog():
     print("[INFO] camera sensor warming up...")
-    vs = cv2.VideoCapture(0); #get input from webcam
+    vs = cv2.VideoCapture(0) #get input from webcam
     detect_time = time.time()
     while True:
-        _,frame = vs.read();
+        _,frame = vs.read()
         #u can certainly add a roi here but for the sake of a demo i'll just leave it as simple as this
-        rects, landmarks = face_detect.detect_face(frame,80);#min face size is set to 80x80
+        rects, landmarks = face_detect.detect_face(frame,80)#min face size is set to 80x80
         aligns = []
         positions = []
 
@@ -91,18 +91,18 @@ def findPeople(features_arr, positions, thres = 0.6, percent_thres = 70):
     :return: person name and percentage
     '''
     f = open('./facerec_128D.txt','r')
-    data_set = json.loads(f.read());
-    returnRes = [];
+    data_set = json.loads(f.read())
+    returnRes = []
     for (i,features_128D) in enumerate(features_arr):
-        result = "Unknown";
+        result = "Unknown"
         smallest = sys.maxsize
         for person in data_set.keys():
-            person_data = data_set[person][positions[i]];
+            person_data = data_set[person][positions[i]]
             for data in person_data:
                 distance = np.sqrt(np.sum(np.square(data-features_128D)))
                 if(distance < smallest):
-                    smallest = distance;
-                    result = person;
+                    smallest = distance
+                    result = person
         percentage =  min(100, 100 * thres / smallest)
         if percentage <= percent_thres :
             result = "Unknown"
@@ -121,19 +121,19 @@ User input his/her name or ID -> Images from Video Capture -> detect the face ->
     
 '''
 def create_manual_data():
-    vs = cv2.VideoCapture(0); #get input from webcam
+    vs = cv2.VideoCapture(0) #get input from webcam
     print("Please input new user ID:")
-    new_name = input(); #ez python input()
-    f = open('./facerec_128D.txt','r');
-    data_set = json.loads(f.read());
-    person_imgs = {"Left" : [], "Right": [], "Center": []};
-    person_features = {"Left" : [], "Right": [], "Center": []};
-    print("Please start turning slowly. Press 'q' to save and add this new user to the dataset");
+    new_name = input() #ez python input()
+    f = open('./facerec_128D.txt','r')
+    data_set = json.loads(f.read())
+    person_imgs = {"Left" : [], "Right": [], "Center": []}
+    person_features = {"Left" : [], "Right": [], "Center": []}
+    print("Please start turning slowly. Press 'q' to save and add this new user to the dataset")
     while True:
-        _, frame = vs.read();
-        rects, landmarks = face_detect.detect_face(frame, 80);  # min face size is set to 80x80
+        _, frame = vs.read()
+        rects, landmarks = face_detect.detect_face(frame, 80)  # min face size is set to 80x80
         for (i, rect) in enumerate(rects):
-            aligned_frame, pos = aligner.align(160,frame,landmarks[:,i]);
+            aligned_frame, pos = aligner.align(160,frame,landmarks[:,i])
             if len(aligned_frame) == 160 and len(aligned_frame[0]) == 160:
                 person_imgs[pos].append(aligned_frame)
                 cv2.imshow("Captured face", aligned_frame)
@@ -143,8 +143,8 @@ def create_manual_data():
 
     for pos in person_imgs: #there r some exceptions here, but I'll just leave it as this to keep it simple
         person_features[pos] = [np.mean(extract_feature.get_features(person_imgs[pos]),axis=0).tolist()]
-    data_set[new_name] = person_features;
-    f = open('./facerec_128D.txt', 'w');
+    data_set[new_name] = person_features
+    f = open('./facerec_128D.txt', 'w')
     f.write(json.dumps(data_set))
 
 
@@ -154,10 +154,10 @@ def create_manual_data():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", type=str, help="Run camera recognition", default="camera")
-    args = parser.parse_args(sys.argv[1:]);
-    FRGraph = FaceRecGraph();
-    MTCNNGraph = FaceRecGraph();
-    aligner = AlignCustom();
+    args = parser.parse_args(sys.argv[1:])
+    FRGraph = FaceRecGraph()
+    MTCNNGraph = FaceRecGraph()
+    aligner = AlignCustom()
     extract_feature = FaceFeature(FRGraph)
-    face_detect = MTCNNDetect(MTCNNGraph, scale_factor=2); #scale_factor, rescales image for faster detection
-    main(args);
+    face_detect = MTCNNDetect(MTCNNGraph, scale_factor=2) #scale_factor, rescales image for faster detection
+    main(args)
